@@ -1,0 +1,14 @@
+__pycache__/
+debug_pages/
+speed_report_render/
+dashboard_run.log
+app password.txt
+cookies.json
+.env
+*.pyc
+
+# Generated local reports and private working files
+enrollment_data*.xlsx
+api_count_comparison.csv
+NPTEL_Enrollment_Speed_Explanation.*
+
