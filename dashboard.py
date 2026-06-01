@@ -234,6 +234,34 @@ INDEX_HTML = """<!doctype html>
       grid-template-columns: 1.35fr .9fr;
       gap: 14px;
     }
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    a.download {
+      border: 1px solid #174f8a;
+      background: var(--blue);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    button.secondary {
+      background: #fff;
+      color: var(--blue);
+    }
+    input[type="search"] {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      min-width: 240px;
+      font-size: 14px;
+    }
     .panel h2 { margin: 0 0 12px; font-size: 17px; color: #23456f; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th, td { border-bottom: 1px solid #eef1f5; padding: 9px 8px; text-align: left; }
@@ -259,6 +287,18 @@ INDEX_HTML = """<!doctype html>
       font-size: 12px;
     }
     .empty { color: var(--muted); padding: 10px 0; }
+    .table-wrap {
+      max-height: 560px;
+      overflow: auto;
+      border: 1px solid #eef1f5;
+      border-radius: 6px;
+    }
+    .table-wrap table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .note { color: var(--muted); font-size: 13px; }
     @media (max-width: 900px) {
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wide { grid-template-columns: 1fr; }
@@ -304,12 +344,28 @@ INDEX_HTML = """<!doctype html>
       </div>
     </section>
     <section class="panel" style="margin-top:14px;">
+      <h2>All Course Counts</h2>
+      <div class="actions">
+        <button id="copyBtn" class="secondary" type="button">Copy table</button>
+        <a class="download" id="downloadLink" href="/enrollment_report.csv" download>Download CSV</a>
+        <input id="searchBox" type="search" placeholder="Search course ID">
+        <span class="note" id="tableInfo"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Course ID</th><th class="num">Learners Enrolled</th></tr></thead>
+          <tbody id="allRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel" style="margin-top:14px;">
       <h2>Latest Run Log</h2>
       <pre id="logBox">No run log yet.</pre>
     </section>
   </main>
   <script>
     const fmt = new Intl.NumberFormat("en-IN");
+    let allCourseRows = [];
     async function getJson(url, options) {
       const response = await fetch(url, options);
       return response.json();
@@ -348,12 +404,32 @@ INDEX_HTML = """<!doctype html>
       document.getElementById("regenBtn").disabled = !!data.running;
       document.getElementById("logBox").textContent = data.log || "No run log yet.";
     }
+    function renderAllRows() {
+      const query = document.getElementById("searchBox").value.trim().toLowerCase();
+      const filtered = allCourseRows.filter(row => row.course_id.toLowerCase().includes(query));
+      document.getElementById("tableInfo").textContent = `${fmt.format(filtered.length)} rows shown`;
+      document.getElementById("allRows").innerHTML = filtered.map(row => `
+        <tr><td>${text(row.course_id)}</td><td class="num">${text(row.count)}</td></tr>
+      `).join("");
+    }
+    async function refreshTable() {
+      const data = await getJson("/api/table");
+      allCourseRows = data.rows || [];
+      renderAllRows();
+    }
     async function refreshAll() {
-      await Promise.all([refreshStats(), refreshJob()]);
+      await Promise.all([refreshStats(), refreshJob(), refreshTable()]);
     }
     document.getElementById("regenBtn").addEventListener("click", async () => {
       await getJson("/api/regenerate", { method: "POST" });
       await refreshAll();
+    });
+    document.getElementById("searchBox").addEventListener("input", renderAllRows);
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const lines = [["Course_ID", "Learners_Enrolled"], ...allCourseRows.map(row => [row.course_id, row.count])];
+      await navigator.clipboard.writeText(lines.map(row => row.join("\t")).join("\n"));
+      document.getElementById("copyBtn").textContent = "Copied";
+      setTimeout(() => document.getElementById("copyBtn").textContent = "Copy table", 1500);
     });
     refreshAll();
     setInterval(refreshAll, 10000);
@@ -391,6 +467,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 payload = dict(job_state)
             payload["log"] = read_tail(RUN_LOG)
             self.send_json(payload)
+        elif path == "/api/table":
+            try:
+                source = latest_excel_file()
+                df = pd.read_excel(source)
+                rows = [
+                    {
+                        "course_id": str(row["Course_ID"]),
+                        "count": str(row["Learners_Enrolled"]),
+                    }
+                    for _, row in df[["Course_ID", "Learners_Enrolled"]].iterrows()
+                ]
+                self.send_json({"rows": rows})
+            except Exception as exc:
+                self.send_json({"rows": [], "message": str(exc)}, status=500)
+        elif path == "/enrollment_report.csv":
+            if CSV_REPORT.exists():
+                body = CSV_REPORT.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=enrollment_report.csv")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(404)
+                self.end_headers()
         else:
             self.send_response(404)
             self.end_headers()
