@@ -13,8 +13,9 @@ COURSES_CSV = BASE_DIR / "courses.csv"
 DOCS_DIR = BASE_DIR / "docs"
 REPORT_CSV = DOCS_DIR / "enrollment_report.csv"
 SUMMARY_JSON = DOCS_DIR / "summary.json"
-MAX_WORKERS = 24
+MAX_WORKERS = 12
 REQUEST_TIMEOUT = 15
+RETRY_ATTEMPTS = 3
 
 
 def extract_course_id(url):
@@ -29,29 +30,49 @@ def fetch_count(course_id):
         "https://onlinecourses.nptel.ac.in/e-learning/api/coursepreview"
         f"?course_id={course_id}"
     )
+    last_error = None
+    for _ in range(RETRY_ATTEMPTS):
+        try:
+            response = requests.get(
+                api_url,
+                timeout=REQUEST_TIMEOUT,
+                verify=False,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            data = response.json()
+            payload = data.get("payload", {})
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            student_count = payload.get("student_count")
+            if student_count is None:
+                return course_id, "Not Found / Error"
+            return course_id, int(student_count)
+        except Exception as exc:
+            last_error = exc
+    return course_id, f"Temporary Error: {last_error}"
+
+
+def load_previous_counts():
+    if not REPORT_CSV.exists():
+        return {}
     try:
-        response = requests.get(
-            api_url,
-            timeout=REQUEST_TIMEOUT,
-            verify=False,
-            headers={"User-Agent": "Mozilla/5.0"},
-        )
-        data = response.json()
-        payload = data.get("payload", {})
-        if isinstance(payload, str):
-            payload = json.loads(payload)
-        student_count = payload.get("student_count")
-        if student_count is None:
-            return course_id, "Not Found / Error"
-        return course_id, int(student_count)
-    except Exception as exc:
-        return course_id, f"Error: {exc}"
+        old_df = pd.read_csv(REPORT_CSV)
+        old_df = old_df[old_df["Course_ID"].astype(str).ne("TOTAL")]
+        old_values = pd.to_numeric(old_df["Learners_Enrolled"], errors="coerce")
+        return {
+            str(row["Course_ID"]): int(old_values.loc[index])
+            for index, row in old_df.iterrows()
+            if pd.notna(old_values.loc[index])
+        }
+    except Exception:
+        return {}
 
 
 def main():
     DOCS_DIR.mkdir(exist_ok=True)
     df = pd.read_csv(COURSES_CSV)
     df["Course_ID"] = df["Course_URL"].apply(extract_course_id)
+    previous_counts = load_previous_counts()
 
     results = {}
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -61,6 +82,12 @@ def main():
             results[course_id] = count
 
     df["Learners_Enrolled"] = df["Course_ID"].map(results)
+
+    temporary_error_mask = df["Learners_Enrolled"].astype(str).str.startswith("Temporary Error:")
+    df.loc[temporary_error_mask, "Learners_Enrolled"] = df.loc[
+        temporary_error_mask, "Course_ID"
+    ].map(previous_counts)
+    df["Learners_Enrolled"] = df["Learners_Enrolled"].fillna("Temporary Error / No Previous Count")
     report_df = df[["Course_ID", "Learners_Enrolled"]].copy()
     numeric = pd.to_numeric(report_df["Learners_Enrolled"], errors="coerce")
     total = int(numeric.fillna(0).sum())

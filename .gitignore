@@ -2,6 +2,11 @@ __pycache__/
 debug_pages/
 speed_report_render/
 dashboard_run.log
+auto_publish_dashboard.log
+auto_publish_dashboard_*.log
+auto_publish_dashboard.lock
+.publish-gh-pages/
+~$*
 app password.txt
 cookies.json
 .env
@@ -11,4 +16,3 @@ cookies.json
 enrollment_data*.xlsx
 api_count_comparison.csv
 NPTEL_Enrollment_Speed_Explanation.*
-
