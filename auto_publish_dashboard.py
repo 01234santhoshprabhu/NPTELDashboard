@@ -77,7 +77,24 @@ def copy_dashboard_files(target_dir):
         target.write_bytes(source.read_bytes())
 
 
+def remove_publish_dir(path):
+    for _ in range(5):
+        shutil.rmtree(path, ignore_errors=True)
+        if not path.exists():
+            return
+        time.sleep(1)
+    log(f"Could not remove temporary publish folder: {path}")
+
+
+def cleanup_old_publish_dirs(current_dir=None):
+    for path in BASE_DIR.glob(".publish-gh-pages-*"):
+        if current_dir is not None and path == current_dir:
+            continue
+        remove_publish_dir(path)
+
+
 def publish_live_branch():
+    cleanup_old_publish_dirs()
     publish_dir = BASE_DIR / (
         f".publish-gh-pages-{datetime.now().strftime('%Y%m%d%H%M%S')}-{os.getpid()}"
     )
@@ -98,7 +115,7 @@ def publish_live_branch():
         else:
             log("No live data change to commit.")
     finally:
-        shutil.rmtree(publish_dir, ignore_errors=True)
+        remove_publish_dir(publish_dir)
 
 
 def publish_once():
