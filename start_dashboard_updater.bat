@@ -9,5 +9,5 @@ echo Keep this window open. If this window is closed, live updates will stop.
 echo.
 python auto_publish_dashboard.py 300
 echo.
-echo Updater stopped. Check auto_publish_dashboard.log for details.
+echo Updater stopped. Check the dated auto_publish_dashboard log file for details.
 pause

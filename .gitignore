@@ -5,7 +5,7 @@ dashboard_run.log
 auto_publish_dashboard.log
 auto_publish_dashboard_*.log
 auto_publish_dashboard.lock
-.publish-gh-pages/
+.publish-gh-pages*/
 ~$*
 app password.txt
 cookies.json

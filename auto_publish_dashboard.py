@@ -2,13 +2,13 @@ import subprocess
 import sys
 import time
 import shutil
+import os
 from datetime import datetime
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
 REPO_URL = "https://github.com/01234santhoshprabhu/count.git"
-PUBLISH_DIR = BASE_DIR / ".publish-gh-pages"
 LOCK_FILE = BASE_DIR / "auto_publish_dashboard.lock"
 LOG_FILE = Path(
     __import__("os").environ.get(
@@ -78,25 +78,27 @@ def copy_dashboard_files(target_dir):
 
 
 def publish_live_branch():
-    if PUBLISH_DIR.exists():
-        shutil.rmtree(PUBLISH_DIR, ignore_errors=True)
+    publish_dir = BASE_DIR / (
+        f".publish-gh-pages-{datetime.now().strftime('%Y%m%d%H%M%S')}-{os.getpid()}"
+    )
 
-    code = run(["git", "clone", "--depth", "1", "--branch", "gh-pages", REPO_URL, str(PUBLISH_DIR)], BASE_DIR)
-    if code != 0:
-        log("Could not clone gh-pages branch; skipping publish.")
-        return
+    try:
+        code = run(["git", "clone", "--depth", "1", "--branch", "gh-pages", REPO_URL, str(publish_dir)], BASE_DIR)
+        if code != 0:
+            log("Could not clone gh-pages branch; skipping publish.")
+            return
 
-    copy_dashboard_files(PUBLISH_DIR)
-    run(["git", "config", "user.name", "NPTEL Automation"], PUBLISH_DIR)
-    run(["git", "config", "user.email", "nptel@example.com"], PUBLISH_DIR)
-    run(["git", "add", "index.html", "summary.json", "enrollment_report.csv"], PUBLISH_DIR)
-    code = run(["git", "commit", "-m", "Auto refresh live dashboard data"], PUBLISH_DIR)
-    if code == 0:
-        run(["git", "push", "origin", "gh-pages"], PUBLISH_DIR)
-    else:
-        log("No live data change to commit.")
-
-    shutil.rmtree(PUBLISH_DIR, ignore_errors=True)
+        copy_dashboard_files(publish_dir)
+        run(["git", "config", "user.name", "NPTEL Automation"], publish_dir)
+        run(["git", "config", "user.email", "nptel@example.com"], publish_dir)
+        run(["git", "add", "index.html", "summary.json", "enrollment_report.csv"], publish_dir)
+        code = run(["git", "commit", "-m", "Auto refresh live dashboard data"], publish_dir)
+        if code == 0:
+            run(["git", "push", "origin", "gh-pages"], publish_dir)
+        else:
+            log("No live data change to commit.")
+    finally:
+        shutil.rmtree(publish_dir, ignore_errors=True)
 
 
 def publish_once():
