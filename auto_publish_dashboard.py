@@ -3,6 +3,7 @@ import sys
 import time
 import shutil
 import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -78,12 +79,7 @@ def copy_dashboard_files(target_dir):
 
 
 def remove_publish_dir(path):
-    for _ in range(5):
-        shutil.rmtree(path, ignore_errors=True)
-        if not path.exists():
-            return
-        time.sleep(1)
-    log(f"Could not remove temporary publish folder: {path}")
+    shutil.rmtree(path, ignore_errors=True)
 
 
 def cleanup_old_publish_dirs(current_dir=None):
@@ -94,9 +90,10 @@ def cleanup_old_publish_dirs(current_dir=None):
 
 
 def publish_live_branch():
-    cleanup_old_publish_dirs()
-    publish_dir = BASE_DIR / (
-        f".publish-gh-pages-{datetime.now().strftime('%Y%m%d%H%M%S')}-{os.getpid()}"
+    publish_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f"nptel-gh-pages-{datetime.now().strftime('%Y%m%d%H%M%S')}-{os.getpid()}-"
+        )
     )
 
     try:
