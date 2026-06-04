@@ -1,21 +1,21 @@
 {
-  "updated_at": "2026-06-04T02:07:27.253160+00:00",
+  "updated_at": "2026-06-04T06:56:48.154828+00:00",
   "course_count": 1058,
   "numeric_count": 1055,
   "error_count": 3,
-  "total_enrollment": 109853,
+  "total_enrollment": 110874,
   "top_courses": [
     {
       "course_id": "noc26_cs107",
-      "count": 2029
-    },
-    {
-      "course_id": "noc26_cs161",
-      "count": 1346
+      "count": 2120
     },
     {
       "course_id": "noc26_cs150",
-      "count": 1340
+      "count": 1363
+    },
+    {
+      "course_id": "noc26_cs161",
+      "count": 1362
     },
     {
       "course_id": "noc26_cs153",
@@ -38,12 +38,12 @@
       "count": 989
     },
     {
-      "course_id": "noc26_cs133",
-      "count": 939
+      "course_id": "noc26_cs109",
+      "count": 941
     },
     {
-      "course_id": "noc26_cs109",
-      "count": 917
+      "course_id": "noc26_cs133",
+      "count": 939
     }
   ],
   "errors": [
