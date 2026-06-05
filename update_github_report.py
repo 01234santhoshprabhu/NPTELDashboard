@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,9 +14,10 @@ COURSES_CSV = BASE_DIR / "courses.csv"
 DOCS_DIR = BASE_DIR / "docs"
 REPORT_CSV = DOCS_DIR / "enrollment_report.csv"
 SUMMARY_JSON = DOCS_DIR / "summary.json"
-MAX_WORKERS = 12
-REQUEST_TIMEOUT = 15
-RETRY_ATTEMPTS = 3
+MAX_WORKERS = 6
+REQUEST_TIMEOUT = 20
+RETRY_ATTEMPTS = 5
+SECOND_PASS_DELAY_SECONDS = 1
 
 
 def extract_course_id(url):
@@ -45,10 +47,13 @@ def fetch_count(course_id):
                 payload = json.loads(payload)
             student_count = payload.get("student_count")
             if student_count is None:
-                return course_id, "Not Found / Error"
+                last_error = "student_count missing"
+                time.sleep(SECOND_PASS_DELAY_SECONDS)
+                continue
             return course_id, int(student_count)
         except Exception as exc:
             last_error = exc
+            time.sleep(SECOND_PASS_DELAY_SECONDS)
     return course_id, f"Temporary Error: {last_error}"
 
 
@@ -80,6 +85,15 @@ def main():
         for future in as_completed(futures):
             course_id, count = future.result()
             results[course_id] = count
+
+    df["Learners_Enrolled"] = df["Course_ID"].map(results)
+
+    failed_mask = pd.to_numeric(df["Learners_Enrolled"], errors="coerce").isna()
+    failed_course_ids = df.loc[failed_mask, "Course_ID"].tolist()
+    for course_id in failed_course_ids:
+        time.sleep(SECOND_PASS_DELAY_SECONDS)
+        _, count = fetch_count(course_id)
+        results[course_id] = count
 
     df["Learners_Enrolled"] = df["Course_ID"].map(results)
 
