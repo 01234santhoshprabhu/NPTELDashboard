@@ -42,6 +42,8 @@ def fetch_count(course_id):
                 headers={"User-Agent": "Mozilla/5.0"},
             )
             data = response.json()
+            if response.status_code == 404 or data.get("status") == 404:
+                return course_id, "Removed / Unavailable"
             payload = data.get("payload", {})
             if isinstance(payload, str):
                 payload = json.loads(payload)
