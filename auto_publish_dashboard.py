@@ -4,6 +4,7 @@ import time
 import shutil
 import os
 import tempfile
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent
 REPO_URL = "https://github.com/01234santhoshprabhu/count.git"
 LOCK_FILE = BASE_DIR / "auto_publish_dashboard.lock"
 MEMBER_OUTPUT_DIR = Path.home() / "Documents" / "Enrollment script" / "member_test" / "output"
+DAILY_LOG_JSON = BASE_DIR / "docs" / "daily_log.json"
 LOG_FILE = Path(
     __import__("os").environ.get(
         "AUTO_PUBLISH_LOG",
@@ -86,13 +88,63 @@ def sync_member_files():
             log(f"Member test file missing, skipping: {source}")
 
 
+def record_daily_log_if_due():
+    now = datetime.now().astimezone()
+    if now.hour < 10:
+        return
+
+    summary_path = BASE_DIR / "docs" / "summary.json"
+    member_path = BASE_DIR / "docs" / "member_summary.json"
+    if not summary_path.exists() or not member_path.exists():
+        log("Daily log skipped because enrollment or member summary is missing.")
+        return
+
+    try:
+        enrollment = json.loads(summary_path.read_text(encoding="utf-8"))
+        member = json.loads(member_path.read_text(encoding="utf-8"))
+        existing = json.loads(DAILY_LOG_JSON.read_text(encoding="utf-8")) if DAILY_LOG_JSON.exists() else []
+    except Exception as exc:
+        log(f"Daily log read failed: {exc}")
+        return
+
+    today = now.date().isoformat()
+    if any(entry.get("date") == today for entry in existing):
+        return
+
+    existing.append(
+        {
+            "date": today,
+            "captured_at": now.isoformat(),
+            "target_time": "10:00",
+            "enrollment": {
+                "updated_at": enrollment.get("updated_at"),
+                "course_count": enrollment.get("course_count"),
+                "numeric_count": enrollment.get("numeric_count"),
+                "error_count": enrollment.get("error_count"),
+                "total_enrollment": enrollment.get("total_enrollment"),
+            },
+            "member": {
+                "updated_at": member.get("updated_at"),
+                "total_courses": member.get("total_courses"),
+                "numeric_count": member.get("numeric_count"),
+                "error_count": member.get("error_count"),
+                "total_members": member.get("total_members"),
+            },
+        }
+    )
+    DAILY_LOG_JSON.write_text(json.dumps(existing, indent=2), encoding="utf-8")
+    log(f"Daily 10 AM log saved for {today}.")
+
+
 def copy_dashboard_files(target_dir):
     for filename in [
         "index.html",
+        "test.html",
         "summary.json",
         "enrollment_report.csv",
         "member_summary.json",
         "member_counts.csv",
+        "daily_log.json",
     ]:
         source = BASE_DIR / "docs" / filename
         target = target_dir / filename
@@ -131,10 +183,12 @@ def publish_live_branch():
             "git",
             "add",
             "index.html",
+            "test.html",
             "summary.json",
             "enrollment_report.csv",
             "member_summary.json",
             "member_counts.csv",
+            "daily_log.json",
         ], publish_dir)
         code = run(["git", "commit", "-m", "Auto refresh live dashboard data"], publish_dir)
         if code == 0:
@@ -161,6 +215,7 @@ def publish_once_locked():
         log("Report update failed; skipping publish.")
         return
     sync_member_files()
+    record_daily_log_if_due()
 
     publish_live_branch()
 
