@@ -11,6 +11,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 REPO_URL = "https://github.com/01234santhoshprabhu/count.git"
 LOCK_FILE = BASE_DIR / "auto_publish_dashboard.lock"
+MEMBER_OUTPUT_DIR = Path.home() / "Documents" / "Enrollment script" / "member_test" / "output"
 LOG_FILE = Path(
     __import__("os").environ.get(
         "AUTO_PUBLISH_LOG",
@@ -71,11 +72,32 @@ def release_lock():
         pass
 
 
+def sync_member_files():
+    member_files = {
+        "summary_test.json": "member_summary.json",
+        "member_counts_test.csv": "member_counts.csv",
+    }
+    for source_name, target_name in member_files.items():
+        source = MEMBER_OUTPUT_DIR / source_name
+        target = BASE_DIR / "docs" / target_name
+        if source.exists():
+            target.write_bytes(source.read_bytes())
+        else:
+            log(f"Member test file missing, skipping: {source}")
+
+
 def copy_dashboard_files(target_dir):
-    for filename in ["index.html", "summary.json", "enrollment_report.csv"]:
+    for filename in [
+        "index.html",
+        "summary.json",
+        "enrollment_report.csv",
+        "member_summary.json",
+        "member_counts.csv",
+    ]:
         source = BASE_DIR / "docs" / filename
         target = target_dir / filename
-        target.write_bytes(source.read_bytes())
+        if source.exists():
+            target.write_bytes(source.read_bytes())
 
 
 def remove_publish_dir(path):
@@ -105,7 +127,15 @@ def publish_live_branch():
         copy_dashboard_files(publish_dir)
         run(["git", "config", "user.name", "NPTEL Automation"], publish_dir)
         run(["git", "config", "user.email", "nptel@example.com"], publish_dir)
-        run(["git", "add", "index.html", "summary.json", "enrollment_report.csv"], publish_dir)
+        run([
+            "git",
+            "add",
+            "index.html",
+            "summary.json",
+            "enrollment_report.csv",
+            "member_summary.json",
+            "member_counts.csv",
+        ], publish_dir)
         code = run(["git", "commit", "-m", "Auto refresh live dashboard data"], publish_dir)
         if code == 0:
             run(["git", "push", "origin", "gh-pages"], publish_dir)
@@ -130,6 +160,7 @@ def publish_once_locked():
     if code != 0:
         log("Report update failed; skipping publish.")
         return
+    sync_member_files()
 
     publish_live_branch()
 
