@@ -88,6 +88,13 @@ def load_previous_counts():
         return {}, {}
 
 
+def format_count_value(value):
+    numeric_value = pd.to_numeric(value, errors="coerce")
+    if pd.notna(numeric_value):
+        return int(numeric_value)
+    return value
+
+
 def main():
     DOCS_DIR.mkdir(exist_ok=True)
     df = pd.read_csv(COURSES_CSV)
@@ -131,6 +138,8 @@ def main():
     exam_numeric = pd.to_numeric(report_df["Exam_Registration"], errors="coerce")
     total = int(numeric.fillna(0).sum())
     total_exam_registration = int(exam_numeric.fillna(0).sum())
+    report_df["Learners_Enrolled"] = report_df["Learners_Enrolled"].map(format_count_value)
+    report_df["Exam_Registration"] = report_df["Exam_Registration"].map(format_count_value)
     total_row = pd.DataFrame(
         [["TOTAL", total, total_exam_registration]],
         columns=["Course_ID", "Learners_Enrolled", "Exam_Registration"],
