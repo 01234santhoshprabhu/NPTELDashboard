@@ -48,8 +48,15 @@ class AuthAdminRouteTest(unittest.TestCase):
         """Verify valid credentials redirect into the application."""
         response = self.login("admin@example.com")
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/admin/")
         with self.client.session_transaction() as session:
             self.assertIn("user_id", session)
+
+    def test_login_follow_redirects_shows_admin_dashboard(self):
+        """Verify login lands on a usable HTML admin page."""
+        response = self.client.post("/login", data={"email": "admin@example.com", "password": "secret123"}, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Admin Dashboard", response.data)
 
     def test_admin_requires_users_manage_permission(self):
         """Verify viewers cannot access user administration."""
