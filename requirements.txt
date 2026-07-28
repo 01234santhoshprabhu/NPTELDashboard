@@ -2,3 +2,8 @@ pandas
 openpyxl
 requests
 selenium
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+APScheduler
+Flask-Login

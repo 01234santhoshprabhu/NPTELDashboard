@@ -16,3 +16,5 @@ cookies.json
 enrollment_data*.xlsx
 api_count_comparison.csv
 NPTEL_Enrollment_Speed_Explanation.*
+instance/
+.test_tmp/
