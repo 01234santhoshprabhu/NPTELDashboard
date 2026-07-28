@@ -53,7 +53,7 @@ class SchedulerServiceTest(unittest.TestCase):
 
         importer = FakeImporter()
 
-        def runner(command, cwd, text, stdout, stderr):
+        def runner(command, cwd, text, stdout, stderr, timeout=None):
             self.assertIn("update_github_report.py", command)
             self.assertEqual(stdout, subprocess.PIPE)
             return SimpleNamespace(returncode=0, stdout="ok")
@@ -68,4 +68,5 @@ class SchedulerServiceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

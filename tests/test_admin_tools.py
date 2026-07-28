@@ -4,7 +4,7 @@ from app import create_app
 from app.config import Config
 from app.database import init_database
 from app.extensions import db
-from app.models import DailyEnrollmentHistory
+from app.models import DailyEnrollmentHistory, SchedulerLog
 
 
 class AdminToolsTestConfig(Config):
@@ -39,7 +39,7 @@ class AdminToolsRouteTest(unittest.TestCase):
         """Verify admin tools page exposes the core application modules."""
         response = self.client.get("/admin/tools")
         self.assertEqual(response.status_code, 200)
-        for label in [b"Count Dashboard", b"User Management", b"REST APIs", b"Scheduler", b"Exports"]:
+        for label in [b"Count Dashboard", b"User Management", b"REST APIs", b"Scheduler", b"Exports", b"Database", b"Member Count Sync"]:
             self.assertIn(label, response.data)
 
     def test_import_current_csv_tool_imports_history(self):
@@ -48,6 +48,23 @@ class AdminToolsRouteTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Import Complete", response.data)
         self.assertGreater(DailyEnrollmentHistory.query.count(), 1000)
+
+
+    def test_tools_page_repairs_stale_running_logs(self):
+        """Verify stale running refresh logs are marked failed."""
+        from datetime import datetime, timedelta, timezone
+
+        db.session.add(SchedulerLog(job_name="daily_enrollment_refresh", status="running", started_at=datetime.now(timezone.utc) - timedelta(hours=2)))
+        db.session.commit()
+        response = self.client.get("/admin/tools")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(SchedulerLog.query.first().status, "failed")
+
+    def test_sync_members_runs_from_tools(self):
+        """Verify member count sync can be started from the tools page."""
+        response = self.client.post("/admin/sync-members", follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"member_count_sync", response.data)
 
 
 if __name__ == "__main__":

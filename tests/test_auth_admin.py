@@ -79,6 +79,18 @@ class AuthAdminRouteTest(unittest.TestCase):
         self.assertEqual(created.roles[0].name, "Operator")
 
 
+    def test_admin_can_disable_and_delete_user(self):
+        """Verify admins can remove existing non-current users."""
+        self.login("admin@example.com")
+        viewer = User.query.filter_by(email="viewer@example.com").first()
+        response = self.client.post(f"/admin/users/{viewer.id}/toggle")
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.query.filter_by(email="viewer@example.com").first().is_active)
+        response = self.client.post(f"/admin/users/{viewer.id}/delete")
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNone(User.query.filter_by(email="viewer@example.com").first())
+
+
 if __name__ == "__main__":
     unittest.main()
 

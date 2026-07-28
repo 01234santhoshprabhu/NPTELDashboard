@@ -29,3 +29,8 @@ class UserService:
         user.is_active = bool(is_active)
         db.session.commit()
         return user
+
+    def delete_user(self, user):
+        """Delete a user account and commit the transaction."""
+        db.session.delete(user)
+        db.session.commit()
