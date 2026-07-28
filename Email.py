@@ -13,8 +13,10 @@ from datetime import datetime
 SENDER_EMAIL    = os.environ.get("SENDER_EMAIL",    "")
 SENDER_PASSWORD = os.environ.get("SENDER_PASSWORD", "")
 RECEIVER_EMAIL  = os.environ.get("RECEIVER_EMAIL",  "")
-EXCEL_FILE      = "enrollment_data.xlsx"
-CSV_FILE        = "enrollment_report.csv"
+BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
+EXCEL_FILE      = os.path.join(BASE_DIR, "enrollment_data.xlsx")
+CSV_FILE        = os.path.join(BASE_DIR, "enrollment_report.csv")
+DOCS_CSV_FILE   = os.path.join(BASE_DIR, "docs", "enrollment_report.csv")
 
 def extract_course_id(url):
     """Extracts course ID from NPTEL URL. e.g. noc24_cs01 from the URL."""
@@ -35,10 +37,19 @@ def send_report():
             )
 
         # 1. Load enrollment data
-        df = pd.read_excel(EXCEL_FILE)
+        if os.path.exists(EXCEL_FILE):
+            df = pd.read_excel(EXCEL_FILE)
+        elif os.path.exists(DOCS_CSV_FILE):
+            df = pd.read_csv(DOCS_CSV_FILE)
+        elif os.path.exists(CSV_FILE):
+            df = pd.read_csv(CSV_FILE)
+        else:
+            raise FileNotFoundError("No enrollment report found to email")
 
-        # 2. Extract Course ID from URL
-        df['Course_ID'] = df['Course_URL'].apply(extract_course_id)
+        # 2. Ensure Course ID exists
+        if 'Course_ID' not in df.columns and 'Course_URL' in df.columns:
+            df['Course_ID'] = df['Course_URL'].apply(extract_course_id)
+        df = df[df['Course_ID'].astype(str).ne('TOTAL')].copy()
 
         # 3. Build CSV with: Course_ID | Learners_Enrolled | Total row
         csv_df = df[['Course_ID', 'Learners_Enrolled']].copy()
@@ -110,7 +121,7 @@ def send_report():
         # 6. Attach CSV file
         with open(CSV_FILE, "rb") as f:
             attachment = MIMEApplication(f.read(), _subtype="csv")
-            attachment.add_header('Content-Disposition', 'attachment', filename=CSV_FILE)
+            attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(CSV_FILE))
             msg.attach(attachment)
 
         # 7. Send via Gmail SMTP
@@ -127,3 +138,4 @@ def send_report():
 # Run
 if __name__ == "__main__":
     send_report()
+

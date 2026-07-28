@@ -14,7 +14,8 @@ from urllib.parse import urlparse
 
 # --- Configuration ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-input_excel  = os.path.join(BASE_DIR, 'courses.xlsx')           # Input Excel file with Course_URL column
+input_excel  = os.path.join(BASE_DIR, 'courses.xlsx')           # Optional Excel input with Course_URL column
+input_csv    = os.path.join(BASE_DIR, 'courses.csv')            # CSV fallback with Course_URL column
 output_excel = os.path.join(BASE_DIR, 'enrollment_data.xlsx')   # Output file with enrollment counts
 debug_folder = os.path.join(BASE_DIR, 'debug_pages')
 MAX_WORKERS = 24
@@ -31,11 +32,16 @@ CHROME_PROFILE_PATH = os.path.join(
     "Downloads", "SELFPACEDDUPLICATE", "ChromeProfile"
 )
 
-# 1. Load the Excel file
+# 1. Load the course list
 try:
-    df = pd.read_excel(input_excel)
+    if os.path.exists(input_excel):
+        df = pd.read_excel(input_excel)
+    elif os.path.exists(input_csv):
+        df = pd.read_csv(input_csv)
+    else:
+        raise FileNotFoundError("courses.xlsx or courses.csv was not found")
 except Exception as e:
-    print(f"Error loading Excel file: {e}")
+    print(f"Error loading course list: {e}")
     exit()
 
 if 'Course_URL' not in df.columns:
@@ -46,7 +52,7 @@ df['Course_URL'] = df['Course_URL'].astype(str).str.strip()
 df = df[df['Course_URL'].ne('') & df['Course_URL'].ne('nan')].copy()
 
 if df.empty:
-    print("Error: No course URLs found in courses.xlsx")
+    print("Error: No course URLs found in the course list")
     exit()
 
 def extract_course_id(url):
@@ -331,3 +337,4 @@ enrolled_counts = [results.get(i, "Not Found / Error") for i in df.index]
 df['Learners_Enrolled'] = enrolled_counts
 save_output(df)
 print(f"\nDone! Data successfully saved to {active_output_excel}")
+

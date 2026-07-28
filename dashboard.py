@@ -15,6 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent
 MAIN_EXCEL = BASE_DIR / "enrollment_data.xlsx"
 UPDATED_EXCEL = BASE_DIR / "enrollment_data_updated.xlsx"
 CSV_REPORT = BASE_DIR / "enrollment_report.csv"
+DOCS_REPORT = BASE_DIR / "docs" / "enrollment_report.csv"
 ENROLL_SCRIPT = BASE_DIR / "ENROLL.py"
 RUN_LOG = BASE_DIR / "dashboard_run.log"
 
@@ -28,12 +29,35 @@ job_state = {
 }
 
 
-def latest_excel_file():
-    candidates = [p for p in [MAIN_EXCEL, UPDATED_EXCEL] if p.exists()]
+def latest_data_file():
+    candidates = [p for p in [MAIN_EXCEL, UPDATED_EXCEL, CSV_REPORT, DOCS_REPORT] if p.exists()]
     if not candidates:
         return MAIN_EXCEL
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
+
+def load_enrollment_data():
+    source = latest_data_file()
+    if not source.exists():
+        return source, None
+
+    if source.suffix.lower() in {".xlsx", ".xls"}:
+        df = pd.read_excel(source)
+    else:
+        df = pd.read_csv(source)
+
+    if "Course_ID" not in df.columns and "Course_URL" in df.columns:
+        df["Course_ID"] = df["Course_URL"].astype(str).str.rstrip("/").str.split("/").str[-1]
+
+    if "Course_ID" in df.columns:
+        df = df[df["Course_ID"].astype(str).ne("TOTAL")].copy()
+
+    missing_columns = {"Course_ID", "Learners_Enrolled"} - set(df.columns)
+    if missing_columns:
+        names = ", ".join(sorted(missing_columns))
+        raise ValueError(f"Enrollment data is missing required column(s): {names}")
+
+    return source, df
 
 def read_tail(path, max_chars=6000):
     if not path.exists():
@@ -45,24 +69,25 @@ def read_tail(path, max_chars=6000):
 def rebuild_csv(df):
     vals = pd.to_numeric(df["Learners_Enrolled"], errors="coerce")
     total = int(vals.fillna(0).sum())
-    csv_df = df[["Course_ID", "Learners_Enrolled"]].copy()
-    total_row = pd.DataFrame([["TOTAL", total]], columns=["Course_ID", "Learners_Enrolled"])
+    columns = ["Course_ID", "Learners_Enrolled"]
+    total_row_values = ["TOTAL", total]
+    if "Exam_Registration" in df.columns:
+        columns.append("Exam_Registration")
+        exam_vals = pd.to_numeric(df["Exam_Registration"], errors="coerce")
+        total_row_values.append(int(exam_vals.fillna(0).sum()))
+    csv_df = df[columns].copy()
+    total_row = pd.DataFrame([total_row_values], columns=columns)
     csv_df = pd.concat([csv_df, total_row], ignore_index=True)
     csv_df.to_csv(CSV_REPORT, index=False)
 
-
 def build_stats():
-    source = latest_excel_file()
-    if not source.exists():
+    source, df = load_enrollment_data()
+    if df is None:
         return {
             "ok": False,
-            "message": "No enrollment Excel output found yet.",
+            "message": "No enrollment output found yet.",
             "source": str(source),
         }
-
-    df = pd.read_excel(source)
-    if "Course_ID" not in df.columns and "Course_URL" in df.columns:
-        df["Course_ID"] = df["Course_URL"].astype(str).str.rstrip("/").str.split("/").str[-1]
 
     vals = pd.to_numeric(df["Learners_Enrolled"], errors="coerce")
     error_df = df[vals.isna()].copy()
@@ -125,9 +150,8 @@ def run_regenerate():
 
     message = "Regeneration complete" if return_code == 0 else "Regeneration failed"
     try:
-        source = latest_excel_file()
-        if source.exists():
-            df = pd.read_excel(source)
+        source, df = load_enrollment_data()
+        if df is not None:
             rebuild_csv(df)
             message += f"; report refreshed from {source.name}"
     except Exception as exc:
@@ -469,8 +493,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_json(payload)
         elif path == "/api/table":
             try:
-                source = latest_excel_file()
-                df = pd.read_excel(source)
+                _, df = load_enrollment_data()
+                if df is None:
+                    self.send_json({"rows": []})
+                    return
                 rows = [
                     {
                         "course_id": str(row["Course_ID"]),
@@ -519,3 +545,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
