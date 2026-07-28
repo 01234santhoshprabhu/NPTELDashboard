@@ -23,7 +23,7 @@ body{font-family:Segoe UI,Arial,sans-serif;background:#f4f7fb;margin:0;display:g
 def login():
     """Authenticate a user and store the user id in the session."""
     if current_user():
-        return redirect(request.args.get("next") or url_for("admin.index"))
+        return redirect(request.args.get("next") or url_for("dashboard.index"))
     error = None
     if request.method == "POST":
         user = User.query.filter_by(email=request.form.get("email", "").lower()).first()
@@ -32,7 +32,7 @@ def login():
             db.session.commit()
             session.clear()
             session["user_id"] = user.id
-            return redirect(request.args.get("next") or url_for("admin.index"))
+            return redirect(request.args.get("next") or url_for("dashboard.index"))
         error = "Invalid email or password"
     return render_template_string(LOGIN_TEMPLATE, error=error)
 
