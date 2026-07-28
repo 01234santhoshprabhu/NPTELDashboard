@@ -36,10 +36,16 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/daily_log.json -o docs/daily_log.json || true
 
       - name: Commit refreshed dashboard data
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Update enrollment dashboard data"
-          file_pattern: docs/enrollment_report.csv docs/summary.json docs/member_summary.json docs/member_counts.csv docs/daily_log.json docs/test.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/enrollment_report.csv docs/summary.json docs/member_summary.json docs/member_counts.csv docs/daily_log.json docs/test.html || true
+          if git diff --cached --quiet; then
+            echo "No refreshed dashboard data changes to commit."
+          else
+            git commit -m "Update enrollment dashboard data"
+            git push
+          fi
 
       - name: Publish refreshed dashboard
         uses: peaceiris/actions-gh-pages@v4
