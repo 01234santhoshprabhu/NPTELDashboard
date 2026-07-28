@@ -72,7 +72,8 @@ class AuthAdminRouteTest(unittest.TestCase):
             data={"email": "operator@example.com", "full_name": "Ops User", "password": "secret123", "roles": ["Operator"]},
             follow_redirects=False,
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"User created successfully", response.data)
         created = User.query.filter_by(email="operator@example.com").first()
         self.assertIsNotNone(created)
         self.assertEqual(created.roles[0].name, "Operator")
@@ -80,3 +81,5 @@ class AuthAdminRouteTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+

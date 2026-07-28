@@ -39,6 +39,8 @@ class DashboardAssetRouteTest(unittest.TestCase):
         response = self.client.get("/enterprise")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"NPTEL Enrollment and Member Live Dashboard", response.data)
+        self.assertIn(b"Logout", response.data)
+        self.assertIn(b"Tools", response.data)
 
     def test_dashboard_assets_are_available_after_login(self):
         """Verify existing dashboard data files are served from Flask."""
