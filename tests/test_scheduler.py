@@ -66,6 +66,17 @@ class SchedulerServiceTest(unittest.TestCase):
         self.assertEqual(importer.calls[0][2], "daily_scheduler")
 
 
+    def test_create_five_minute_scheduler(self):
+        """Verify local scheduler can be configured for 5-minute refreshes."""
+        from app.scheduler import create_scheduler
+
+        scheduler = create_scheduler(self.app, every_5_minutes=True)
+        jobs = scheduler.get_jobs()
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0].id, "five_minute_dashboard_refresh")
+        self.assertIn("interval", str(jobs[0].trigger))
+
+
 if __name__ == "__main__":
     unittest.main()
 
