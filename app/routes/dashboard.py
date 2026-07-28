@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from flask import Blueprint, Response, redirect, send_from_directory, url_for
+import requests
+from flask import Blueprint, Response, current_app, redirect, send_from_directory, url_for
 
 from app.security import current_user, login_required
 
@@ -14,6 +15,10 @@ DASHBOARD_ASSETS = {
     "member_summary.json",
     "member_counts.csv",
     "daily_log.json",
+}
+ASSET_MIMETYPES = {
+    ".csv": "text/csv; charset=utf-8",
+    ".json": "application/json",
 }
 
 APP_TOOLBAR = """
@@ -35,6 +40,32 @@ APP_TOOLBAR = """
 """
 
 
+def _no_store(response):
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
+def _remote_dashboard_asset(filename):
+    if not current_app.config.get("USE_REMOTE_DASHBOARD_ASSETS"):
+        return None
+
+    base_url = current_app.config.get("PUBLIC_DASHBOARD_BASE_URL", "").rstrip("/")
+    if not base_url:
+        return None
+
+    url = f"{base_url}/{filename}"
+    try:
+        response = requests.get(url, timeout=20)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        current_app.logger.warning("Remote dashboard asset failed: %s", exc)
+        return None
+
+    suffix = Path(filename).suffix.lower()
+    mimetype = ASSET_MIMETYPES.get(suffix, response.headers.get("Content-Type"))
+    return _no_store(Response(response.content, mimetype=mimetype))
+
+
 @dashboard_bp.route("/")
 def root():
     """Redirect visitors to the authenticated GitHub-style dashboard."""
@@ -51,9 +82,7 @@ def index():
         html = html.replace(marker, marker + APP_TOOLBAR, 1)
     else:
         html = APP_TOOLBAR + html
-    response = Response(html, mimetype="text/html")
-    response.headers["Cache-Control"] = "no-store, max-age=0"
-    return response
+    return _no_store(Response(html, mimetype="text/html"))
 
 
 @dashboard_bp.route("/<path:filename>")
@@ -62,6 +91,9 @@ def docs_asset(filename):
     """Serve dashboard data assets required by docs/index.html."""
     if filename not in DASHBOARD_ASSETS:
         return redirect(url_for("dashboard.index"))
-    response = send_from_directory(DOCS_DIR, filename)
-    response.headers["Cache-Control"] = "no-store, max-age=0"
-    return response
+
+    remote_response = _remote_dashboard_asset(filename)
+    if remote_response is not None:
+        return remote_response
+
+    return _no_store(send_from_directory(DOCS_DIR, filename))

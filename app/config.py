@@ -23,3 +23,10 @@ class Config:
     DAILY_REFRESH_MINUTE = int(os.getenv("DAILY_REFRESH_MINUTE", "0"))
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@nptel.local")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "ChangeMe123!")
+    PUBLIC_DASHBOARD_BASE_URL = os.getenv(
+        "PUBLIC_DASHBOARD_BASE_URL",
+        "https://01234santhoshprabhu.github.io/NPTELDashboard/",
+    ).rstrip("/")
+    USE_REMOTE_DASHBOARD_ASSETS = os.getenv(
+        "USE_REMOTE_DASHBOARD_ASSETS", "0"
+    ).lower() in {"1", "true", "yes", "on"}

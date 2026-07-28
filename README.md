@@ -65,3 +65,61 @@ Manual local refresh:
 python manage.py run-combined-refresh
 ```
 
+
+## Public Login App on Render Free
+
+Recommended free public host: Render Free Web Service with Render Free PostgreSQL.
+
+Live static dashboard:
+
+```text
+https://01234santhoshprabhu.github.io/NPTELDashboard/
+```
+
+Repository:
+
+```text
+https://github.com/01234santhoshprabhu/NPTELDashboard
+```
+
+To deploy the login/admin Flask application publicly:
+
+1. Open Render and choose New > Blueprint.
+2. Connect the GitHub repository `01234santhoshprabhu/NPTELDashboard`.
+3. Select this repository root. Render reads `render.yaml` automatically.
+4. After deploy, open the Render web service URL and go to `/login`.
+5. Change `ADMIN_EMAIL` and `ADMIN_PASSWORD` in Render environment variables before sharing the app.
+
+The deployed Flask app uses:
+
+- `DATABASE_URL`: Render PostgreSQL connection string.
+- `PUBLIC_DASHBOARD_BASE_URL`: `https://01234santhoshprabhu.github.io/NPTELDashboard/`.
+- `USE_REMOTE_DASHBOARD_ASSETS=true`: after login, dashboard JSON and CSV are proxied from the live GitHub Pages output, so counts follow the 5-minute GitHub Actions refresh.
+
+Database location:
+
+- Local development: `instance/necip.db` SQLite file.
+- Render deployment: Render Dashboard > PostgreSQL > `nptel-dashboard-db`.
+
+User management:
+
+- Login as an admin.
+- Open `/admin/users`.
+- Add email IDs as `admin`, `operator`, or `viewer`.
+- Remove an existing user with the delete action on the same page.
+- Use `admin` only for trusted users because admins can manage other users.
+
+Useful URLs after deploy:
+
+- `/login`: login page.
+- `/enterprise`: authenticated count dashboard.
+- `/admin/`: admin dashboard.
+- `/admin/tools`: refresh/import/export tools.
+- `/admin/users`: user management.
+- `/api/v1/dashboard`: dashboard REST API.
+- `/logout`: logout.
+
+Render Free notes:
+
+- The free web service can sleep after idle time, so first load may be slow.
+- Render free PostgreSQL is suitable for testing/demo use, not long-term production data retention.
