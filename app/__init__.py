@@ -1,6 +1,7 @@
 from flask import Flask
 
 from app.config import Config
+from app.database import init_database
 from app.extensions import db
 
 
@@ -22,6 +23,6 @@ def create_app(config_object=Config):
     app.register_blueprint(api_bp, url_prefix="/api/v1")
 
     with app.app_context():
-        db.create_all()
+        init_database(app.config.get("ADMIN_EMAIL"), app.config.get("ADMIN_PASSWORD"))
 
     return app
