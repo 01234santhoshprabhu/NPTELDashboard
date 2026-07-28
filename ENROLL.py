@@ -166,6 +166,7 @@ def browser_cookies_from_driver():
 
 def session_from_cookies(cookies):
     session = requests.Session()
+    session.trust_env = False
     session.headers.update(
         {
             "User-Agent": (

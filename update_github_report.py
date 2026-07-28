@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,10 +15,10 @@ COURSES_CSV = BASE_DIR / "courses.csv"
 DOCS_DIR = BASE_DIR / "docs"
 REPORT_CSV = DOCS_DIR / "enrollment_report.csv"
 SUMMARY_JSON = DOCS_DIR / "summary.json"
-MAX_WORKERS = 6
-REQUEST_TIMEOUT = 20
-RETRY_ATTEMPTS = 5
-SECOND_PASS_DELAY_SECONDS = 1
+MAX_WORKERS = int(os.getenv("NPTEL_REFRESH_WORKERS", "24"))
+REQUEST_TIMEOUT = int(os.getenv("NPTEL_REQUEST_TIMEOUT", "8"))
+RETRY_ATTEMPTS = int(os.getenv("NPTEL_RETRY_ATTEMPTS", "2"))
+SECOND_PASS_DELAY_SECONDS = float(os.getenv("NPTEL_RETRY_DELAY_SECONDS", "0.25"))
 
 
 def extract_course_id(url):
@@ -33,9 +34,11 @@ def fetch_count(course_id):
         f"?course_id={course_id}"
     )
     last_error = None
-    for _ in range(RETRY_ATTEMPTS):
+    for attempt in range(RETRY_ATTEMPTS):
         try:
-            response = requests.get(
+            session = requests.Session()
+            session.trust_env = False
+            response = session.get(
                 api_url,
                 timeout=REQUEST_TIMEOUT,
                 verify=False,
@@ -51,14 +54,16 @@ def fetch_count(course_id):
             exam_registration_count = payload.get("exam_registrations_count")
             if student_count is None:
                 last_error = "student_count missing"
-                time.sleep(SECOND_PASS_DELAY_SECONDS)
+                if attempt + 1 < RETRY_ATTEMPTS:
+                    time.sleep(SECOND_PASS_DELAY_SECONDS)
                 continue
             if exam_registration_count is None:
                 exam_registration_count = 0
             return course_id, int(student_count), int(exam_registration_count)
         except Exception as exc:
             last_error = exc
-            time.sleep(SECOND_PASS_DELAY_SECONDS)
+            if attempt + 1 < RETRY_ATTEMPTS:
+                time.sleep(SECOND_PASS_DELAY_SECONDS)
     return course_id, f"Temporary Error: {last_error}", f"Temporary Error: {last_error}"
 
 
@@ -116,7 +121,8 @@ def main():
     failed_mask = pd.to_numeric(df["Learners_Enrolled"], errors="coerce").isna()
     failed_course_ids = df.loc[failed_mask, "Course_ID"].tolist()
     for course_id in failed_course_ids:
-        time.sleep(SECOND_PASS_DELAY_SECONDS)
+        if SECOND_PASS_DELAY_SECONDS:
+            time.sleep(SECOND_PASS_DELAY_SECONDS)
         _, enrollment_count, exam_count = fetch_count(course_id)
         enrollment_results[course_id] = enrollment_count
         exam_results[course_id] = exam_count
@@ -199,6 +205,8 @@ def main():
     SUMMARY_JSON.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"Updated {REPORT_CSV}")
     print(f"Total enrollment: {total}")
+    print(f"Total exam registration: {total_exam_registration}")
+    print(f"Temporary/missing enrollment rows: {int(numeric.isna().sum())}")
 
 
 if __name__ == "__main__":
