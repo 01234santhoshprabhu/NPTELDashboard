@@ -31,9 +31,9 @@ jobs:
 
       - name: Preserve latest member data
         run: |
-          curl -fsSL https://raw.githubusercontent.com/01234santhoshprabhu/count/gh-pages/member_summary.json -o docs/member_summary.json || true
-          curl -fsSL https://raw.githubusercontent.com/01234santhoshprabhu/count/gh-pages/member_counts.csv -o docs/member_counts.csv || true
-          curl -fsSL https://raw.githubusercontent.com/01234santhoshprabhu/count/gh-pages/daily_log.json -o docs/daily_log.json || true
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/member_summary.json -o docs/member_summary.json || true
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/member_counts.csv -o docs/member_counts.csv || true
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/daily_log.json -o docs/daily_log.json || true
 
       - name: Commit refreshed dashboard data
         uses: stefanzweifel/git-auto-commit-action@v5
