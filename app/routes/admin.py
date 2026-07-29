@@ -1,5 +1,6 @@
 import threading
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from flask import Blueprint, current_app, redirect, render_template_string, request, url_for
 
@@ -25,10 +26,17 @@ def page(body):
 
 
 def database_location():
-    """Return a readable database location for the admin UI."""
+    """Return a safe, readable database location for the admin UI."""
     uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if uri.startswith("sqlite:///"):
         return uri.replace("sqlite:///", "")
+    parsed = urlsplit(uri)
+    if parsed.username or parsed.password:
+        host = parsed.hostname or ""
+        if parsed.port:
+            host = f"{host}:{parsed.port}"
+        masked_netloc = f"{parsed.username or 'user'}:***@{host}"
+        return urlunsplit((parsed.scheme, masked_netloc, parsed.path, "", ""))
     return uri
 
 
