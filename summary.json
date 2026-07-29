@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-07-29T17:33:20.570910+00:00",
+  "updated_at": "2026-07-29T18:34:34.067409+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
-  "total_enrollment": 3271485,
+  "total_enrollment": 3276423,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
   "total_exam_registration": 244288,
@@ -20,27 +20,27 @@
     },
     {
       "course_id": "noc26_cs153",
-      "count": 80224,
+      "count": 80727,
       "exam_registration": 8189
     },
     {
       "course_id": "noc26_cs107",
-      "count": 70465,
+      "count": 70821,
       "exam_registration": 4586
     },
     {
       "course_id": "noc26_cs136",
-      "count": 54099,
+      "count": 54421,
       "exam_registration": 4239
     },
     {
       "course_id": "noc26_cs144",
-      "count": 46295,
+      "count": 46519,
       "exam_registration": 3125
     },
     {
       "course_id": "noc26_cs160",
-      "count": 45822,
+      "count": 45996,
       "exam_registration": 3696
     },
     {
@@ -50,7 +50,7 @@
     },
     {
       "course_id": "noc26_cs117",
-      "count": 40866,
+      "count": 41146,
       "exam_registration": 1866
     },
     {
@@ -68,7 +68,7 @@
     {
       "course_id": "noc26_cs153",
       "exam_registration": 8189,
-      "count": 80224
+      "count": 80727
     },
     {
       "course_id": "noc26_cs150",
@@ -78,17 +78,17 @@
     {
       "course_id": "noc26_cs107",
       "exam_registration": 4586,
-      "count": 70465
+      "count": 70821
     },
     {
       "course_id": "noc26_hs160",
       "exam_registration": 4347,
-      "count": 34338
+      "count": 34490
     },
     {
       "course_id": "noc26_cs136",
       "exam_registration": 4239,
-      "count": 54099
+      "count": 54421
     },
     {
       "course_id": "noc26_ge79",
@@ -103,12 +103,12 @@
     {
       "course_id": "noc26_mg114",
       "exam_registration": 3748,
-      "count": 25191
+      "count": 25287
     },
     {
       "course_id": "noc26_cs160",
       "exam_registration": 3696,
-      "count": 45822
+      "count": 45996
     }
   ],
   "errors": [
