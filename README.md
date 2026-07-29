@@ -123,3 +123,28 @@ Render Free notes:
 
 - The free web service can sleep after idle time, so first load may be slow.
 - Render free PostgreSQL is suitable for testing/demo use, not long-term production data retention.
+
+## Admin Tool: Import CSV + Update Drive
+
+The `/admin/tools` page includes **Import CSV + Update Drive**.
+
+It does three things:
+
+1. Imports `docs/enrollment_report.csv` into PostgreSQL.
+2. Rebuilds `docs/summary.json` from that CSV.
+3. Publishes dashboard files back to GitHub when `GITHUB_PUBLISH_TOKEN` is configured in Render.
+
+Required Render environment variable for publishing:
+
+```text
+GITHUB_PUBLISH_TOKEN=<GitHub fine-grained token with contents read/write access to 01234santhoshprabhu/NPTELDashboard>
+```
+
+Optional environment variables:
+
+```text
+GITHUB_REPOSITORY=01234santhoshprabhu/NPTELDashboard
+GITHUB_PUBLISH_BRANCH=main
+```
+
+Without `GITHUB_PUBLISH_TOKEN`, the tool still imports CSV data into the database and rebuilds the local summary, then shows a clear warning that GitHub publishing is not configured.

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app import create_app
 from app.config import Config
@@ -39,7 +40,7 @@ class AdminToolsRouteTest(unittest.TestCase):
         """Verify admin tools page exposes the core application modules."""
         response = self.client.get("/admin/tools")
         self.assertEqual(response.status_code, 200)
-        for label in [b"Count Dashboard", b"User Management", b"REST APIs", b"Scheduler", b"Exports", b"Database", b"Member Count Sync"]:
+        for label in [b"Count Dashboard", b"User Management", b"REST APIs", b"Scheduler", b"Exports", b"Database", b"Member Count Sync", b"Update Drive"]:
             self.assertIn(label, response.data)
 
     def test_import_current_csv_tool_imports_history(self):
@@ -47,6 +48,17 @@ class AdminToolsRouteTest(unittest.TestCase):
         response = self.client.post("/admin/import-current")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Import Complete", response.data)
+        self.assertGreater(DailyEnrollmentHistory.query.count(), 1000)
+
+
+    @patch("app.routes.admin.DashboardPublishService.publish_current_dashboard_files", side_effect=RuntimeError("GitHub publish not configured. Set GITHUB_PUBLISH_TOKEN in Render Environment."))
+    @patch("app.routes.admin.DashboardPublishService.rebuild_summary_from_csv", return_value={"total_enrollment": 123})
+    def test_import_current_drive_imports_db_and_reports_missing_token(self, _summary, _publish):
+        """Verify current CSV import plus drive update reports missing GitHub configuration."""
+        response = self.client.post("/admin/import-current-drive")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"CSV Imported", response.data)
+        self.assertIn(b"GITHUB_PUBLISH_TOKEN", response.data)
         self.assertGreater(DailyEnrollmentHistory.query.count(), 1000)
 
 

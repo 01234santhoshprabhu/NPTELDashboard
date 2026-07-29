@@ -9,6 +9,7 @@ from app.models import Course, DailyEnrollmentHistory, Role, SchedulerLog, User,
 from app.security import current_user, permission_required
 from app.services.enrollment_service import EnrollmentImportService
 from app.services.refresh_service import DailyRefreshService
+from app.services.dashboard_publish_service import DashboardPublishService
 from app.services.user_service import UserService
 
 
@@ -167,6 +168,7 @@ def tools():
       <div class='card'><h3>Database</h3><p class='muted'>SQLite local fallback / PostgreSQL via DATABASE_URL.</p><p class='small'>{database_location()}</p></div>
       <div class='card'><h3>REST APIs</h3><p class='muted'>Dashboard, courses, history, reports, users.</p><a class='button' href='/api/v1/dashboard'>Dashboard API</a></div>
       <div class='card'><h3>Scheduler</h3><p class='muted'>Daily 9:00 AM refresh job. Current report: {report_status}</p><form method='post' action='/admin/import-current'><button>Import Current CSV to DB</button></form></div>
+      <div class='card'><h3>Update Drive</h3><p class='muted'>Import current CSV to DB, rebuild summary, and publish dashboard files when GitHub token is set.</p><form method='post' action='/admin/import-current-drive'><button>Import CSV + Update Drive</button></form></div>
       <div class='card'><h3>Enrollment/Register Refresh</h3><p class='muted'>Runs NPTEL enrollment and exam-registration refresh in background. It may take several minutes.</p><form method='post' action='/admin/run-refresh'><button class='danger' {disabled}>Start Refresh</button></form></div>
       <div class='card'><h3>Member Count Sync</h3><p class='muted'>Copies latest member_test output into this dashboard.</p><form method='post' action='/admin/sync-members'><button {disabled}>Sync Member Counts</button></form></div>
       <div class='card'><h3>Exports</h3><p><a class='button' href='/enrollment_report.csv'>Enrollment CSV</a><a class='button' href='/member_counts.csv'>Member CSV</a></p></div>
@@ -189,6 +191,30 @@ def import_current():
     """Import the currently displayed CSV report into the database."""
     result = EnrollmentImportService().import_report(BASE_DIR / "docs" / "enrollment_report.csv", source="manual_import")
     return page(f"<h1>Import Complete</h1><div class='notice'>Imported {result['imported']} rows for {result['snapshot_date']}.</div><p><a class='button' href='/admin/tools'>Back to Tools</a></p>")
+
+
+@admin_bp.route("/import-current-drive", methods=["POST"])
+@permission_required("scheduler.manage")
+def import_current_drive():
+    """Import current CSV and publish dashboard files when GitHub credentials exist."""
+    result = EnrollmentImportService().import_report(BASE_DIR / "docs" / "enrollment_report.csv", source="manual_import_drive")
+    publisher = DashboardPublishService(BASE_DIR)
+    summary = publisher.rebuild_summary_from_csv()
+    try:
+        published = publisher.publish_current_dashboard_files()
+    except RuntimeError as exc:
+        return page(
+            f"<h1>CSV Imported</h1>"
+            f"<div class='notice'>Imported {result['imported']} rows for {result['snapshot_date']}. Summary rebuilt with total enrollment {summary['total_enrollment']}.</div>"
+            f"<div class='notice warn'>Drive/GitHub update not completed: {exc}</div>"
+            f"<p class='muted'>Set GITHUB_PUBLISH_TOKEN in Render Environment, then run this tool again.</p>"
+            f"<p><a class='button' href='/admin/tools'>Back to Tools</a></p>"
+        )
+    return page(
+        f"<h1>Drive Update Complete</h1>"
+        f"<div class='notice'>Imported {result['imported']} rows for {result['snapshot_date']} and published {len(published['published'])} files to {published['repository']}:{published['branch']}.</div>"
+        f"<p><a class='button' href='/admin/tools'>Back to Tools</a></p>"
+    )
 
 
 @admin_bp.route("/run-refresh", methods=["POST"])
