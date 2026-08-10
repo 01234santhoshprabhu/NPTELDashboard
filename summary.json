@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-08-10T18:26:26.227632+00:00",
+  "updated_at": "2026-08-10T19:30:09.642404+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
-  "total_enrollment": 3789042,
+  "total_enrollment": 3792772,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
   "total_exam_registration": 483852,
@@ -35,17 +35,17 @@
     },
     {
       "course_id": "noc26_cs144",
-      "count": 52669,
+      "count": 52808,
       "exam_registration": 5887
     },
     {
       "course_id": "noc26_cs160",
-      "count": 50813,
+      "count": 50927,
       "exam_registration": 9394
     },
     {
       "course_id": "noc26_cs157",
-      "count": 49813,
+      "count": 49981,
       "exam_registration": 5567
     },
     {
@@ -55,7 +55,7 @@
     },
     {
       "course_id": "noc26_cs109",
-      "count": 43858,
+      "count": 43982,
       "exam_registration": 4469
     }
   ],
@@ -78,7 +78,7 @@
     {
       "course_id": "noc26_cs160",
       "exam_registration": 9394,
-      "count": 50813
+      "count": 50927
     },
     {
       "course_id": "noc26_hs160",
@@ -88,7 +88,7 @@
     {
       "course_id": "noc26_cs141",
       "exam_registration": 8895,
-      "count": 43094
+      "count": 43156
     },
     {
       "course_id": "noc26_cs107",
@@ -103,12 +103,12 @@
     {
       "course_id": "noc26_mg114",
       "exam_registration": 7005,
-      "count": 28320
+      "count": 28375
     },
     {
       "course_id": "noc26_ge79",
       "exam_registration": 6610,
-      "count": 26071
+      "count": 26101
     }
   ],
   "errors": [
