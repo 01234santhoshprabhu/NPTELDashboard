@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-08-10T23:47:51.917597+00:00",
+  "updated_at": "2026-08-11T00:37:52.977617+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
-  "total_enrollment": 3797073,
+  "total_enrollment": 3797289,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
   "total_exam_registration": 483852,
@@ -20,17 +20,17 @@
     },
     {
       "course_id": "noc26_cs153",
-      "count": 91857,
+      "count": 91871,
       "exam_registration": 15723
     },
     {
       "course_id": "noc26_cs107",
-      "count": 79665,
+      "count": 79676,
       "exam_registration": 8647
     },
     {
       "course_id": "noc26_cs136",
-      "count": 63186,
+      "count": 63203,
       "exam_registration": 8552
     },
     {
@@ -40,17 +40,17 @@
     },
     {
       "course_id": "noc26_cs160",
-      "count": 50927,
+      "count": 50932,
       "exam_registration": 9394
     },
     {
       "course_id": "noc26_cs157",
-      "count": 49981,
+      "count": 49996,
       "exam_registration": 5567
     },
     {
       "course_id": "noc26_cs117",
-      "count": 47359,
+      "count": 47369,
       "exam_registration": 3857
     },
     {
@@ -68,7 +68,7 @@
     {
       "course_id": "noc26_cs153",
       "exam_registration": 15723,
-      "count": 91857
+      "count": 91871
     },
     {
       "course_id": "noc26_cs150",
@@ -78,12 +78,12 @@
     {
       "course_id": "noc26_cs160",
       "exam_registration": 9394,
-      "count": 50927
+      "count": 50932
     },
     {
       "course_id": "noc26_hs160",
       "exam_registration": 9011,
-      "count": 38599
+      "count": 38606
     },
     {
       "course_id": "noc26_cs141",
@@ -93,12 +93,12 @@
     {
       "course_id": "noc26_cs107",
       "exam_registration": 8647,
-      "count": 79665
+      "count": 79676
     },
     {
       "course_id": "noc26_cs136",
       "exam_registration": 8552,
-      "count": 63186
+      "count": 63203
     },
     {
       "course_id": "noc26_mg114",
