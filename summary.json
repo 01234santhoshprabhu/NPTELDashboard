@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-08-14T06:23:21.290993+00:00",
+  "updated_at": "2026-08-14T07:56:55.859263+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
-  "total_enrollment": 3849742,
+  "total_enrollment": 3852910,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
-  "total_exam_registration": 929929,
+  "total_exam_registration": 972739,
   "top_courses": [
     {
       "course_id": "noc26_cs161",
@@ -36,26 +36,26 @@
     {
       "course_id": "noc26_cs144",
       "count": 52860,
-      "exam_registration": 10233
+      "exam_registration": 13372
     },
     {
       "course_id": "noc26_cs160",
       "count": 50977,
-      "exam_registration": 18408
+      "exam_registration": 23777
     },
     {
       "course_id": "noc26_cs157",
       "count": 50041,
-      "exam_registration": 10377
+      "exam_registration": 13308
     },
     {
       "course_id": "noc26_cs117",
       "count": 47404,
-      "exam_registration": 6821
+      "exam_registration": 9119
     },
     {
       "course_id": "noc26_hs249",
-      "count": 46055,
+      "count": 46667,
       "exam_registration": 6085
     }
   ],
@@ -76,6 +76,11 @@
       "count": 91992
     },
     {
+      "course_id": "noc26_cs160",
+      "exam_registration": 23777,
+      "count": 50977
+    },
+    {
       "course_id": "noc26_cs141",
       "exam_registration": 20926,
       "count": 43183
@@ -84,11 +89,6 @@
       "course_id": "noc26_cs136",
       "exam_registration": 19137,
       "count": 63336
-    },
-    {
-      "course_id": "noc26_cs160",
-      "exam_registration": 18408,
-      "count": 50977
     },
     {
       "course_id": "noc26_hs160",
@@ -101,14 +101,14 @@
       "count": 79733
     },
     {
+      "course_id": "noc26_hs193",
+      "exam_registration": 13555,
+      "count": 31983
+    },
+    {
       "course_id": "noc26_mg114",
       "exam_registration": 13456,
       "count": 28403
-    },
-    {
-      "course_id": "noc26_ge79",
-      "exam_registration": 11627,
-      "count": 26147
     }
   ],
   "errors": [
