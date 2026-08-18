@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-08-18T13:30:59.255745+00:00",
+  "updated_at": "2026-08-18T14:09:11.143290+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
-  "total_enrollment": 3928533,
+  "total_enrollment": 3929397,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
   "total_exam_registration": 1358852,
@@ -35,7 +35,7 @@
     },
     {
       "course_id": "noc26_hs249",
-      "count": 52898,
+      "count": 53144,
       "exam_registration": 9628
     },
     {
