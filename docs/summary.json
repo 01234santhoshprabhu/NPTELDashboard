@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-08-23T02:56:17.875959+00:00",
+  "updated_at": "2026-08-23T03:48:32.550297+00:00",
   "course_count": 1058,
   "numeric_count": 1054,
   "error_count": 4,
   "total_enrollment": 3959593,
   "exam_registration_numeric_count": 1054,
   "exam_registration_error_count": 4,
-  "total_exam_registration": 1417483,
+  "total_exam_registration": 1417789,
   "top_courses": [
     {
       "course_id": "noc26_cs161",
